@@ -1,53 +1,63 @@
-library (readr)
-library (ggmap)
-library (ggplot2)
+#
+# This is a Shiny web application. You can run the application by clicking
+# the 'Run App' button above.
+#
+# Find out more about building applications with Shiny here:
+#
+#    http://shiny.rstudio.com/
+#
+
 library(shiny)
 
 
 
-crime_d <- read.csv("crime_data.csv")
-crime_d$date <- as.Date(crime_d$date, "%d/%m/%Y")
+big_s <- read.csv("crime_data.csv")
+big_s$date <- as.Date(big_s$date, "%d/%m/%Y")
 
 
 input <- fluidPage(
-  
-  sidebarLayout(
     
-    sidebarPanel(
-      
-      checkboxGroupInput("offs", label = "offense",
-                         choices = list("murder" = 'murder',
-                                        "robbery" = 'robbery',
-                                        "aggravated assault" = 'aggravated assault',
-                                        "auto theft" = 'auto theft',
-                                        "theft" =  'theft')
-                         ,selected = "murder")
-      
-    ),
+    sidebarLayout(
+        
+        sidebarPanel(
+            
+            checkboxGroupInput("comp", label = " Company",
+                               choices = list("Apple" = 'Apple',
+                                              "Google" = 'Google',
+                                              "Microsoft" = 'Microsoft',
+                                              "Facebook" = 'Facebook',
+                                              "Amazon" =  'Amazon',
+                                              "Alibaba" = 'Alibaba',
+                                              "Intel"  =  'Intel',
+                                              "SAP" ='SAP'),selected = "Apple"),
+            
+            radioButtons("perf", 
+                         label = "Select one option", 
+                         choices = list("Closing Price" = 'close_price',
+                                        "Volume" = 'volume'),selected = 'close_price'),           
+            
+        ),
+        
+        mainPanel(
+            
+            plotOutput('myplot'))
+        
+    )
     
-    mainPanel(
-      
-      plotOutput('myplot'))
-    
-  )
-  
 )
 
 output <- function(input, output) {
-  
-  output$myplot <- renderPlot({
     
-    bbox = c(left=-95.8, bottom=29.4, right=-95.0, top=30.0)
-    map <- get_stamenmap(bbox, zoom = 10, source="stamen")
+    output$myplot <- renderPlot({
+        big_s1 <- big_s %>% filter(company %in% input$comp)
+        ggplot(data = big_s1) +
+            geom_line(
+                aes_string(x="date", y= input$perf, group = "company", col = "company")) 
+        
+        
+    })
     
-    ggmap(map) + stat_density2d(data = subset(big_s, offense == input$offs),
-                                aes(x = lon, y = lat, fill = ..level.., alpha = ..level..), geom = 'polygon') +
-      labs(color = '') + 
-      facet_wrap(~ offense) 
     
-  })
-  
-  
 }
 
 
